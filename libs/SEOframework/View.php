@@ -1,15 +1,15 @@
 <?php
 /**
  * LICENSE
- * 
+ *
  * Copyright 2010 Albert Lombarte
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,7 +53,9 @@ class View
 		$this->view->compile_dir  = $templates_path . '_smarty/compile/';
 		$this->view->config_dir   = $templates_path . '_smarty/configs/';
 		$this->view->cache_dir    = $templates_path . '_smarty/cache/';
-		$this->view->plugins_dir[] =  $templates_path . '_smarty/plugins';
+
+		// Plugins.
+		$this->addPlugins();
 
 		// Settings:
 		// Smarty tests to see if the current template has changed (different time stamp) since the last time it was compiled. If it has changed, it recompiles
@@ -115,6 +117,37 @@ class View
 	public function  __call( $name, $arguments )
 	{
 		return call_user_func_array(array( $this->view, $name ), $arguments );
+	}
+
+	/**
+	 * Add plugins in Smarty. It respects the instances inheritance.
+	 * @return void
+	 */
+	protected function addPlugins()
+	{
+		// Reset default plugins configuration.
+		$this->view->plugins_dir = array();
+
+		// Get the instances inheritance.
+		$instance_inheritance = Domains::getInstance()->getInstanceInheritance();
+
+		// If there is inheritance.
+		if ( is_array( $instance_inheritance ) )
+		{
+			// First the child instance, last the parent instance.
+			$instance_inheritance = array_reverse( $instance_inheritance );
+			foreach ( $instance_inheritance as $current_instance )
+			{
+				$this->view->plugins_dir[] =  ROOT_PATH . '/instances/' . $current_instance . '/templates/' . '_smarty/plugins';
+			}
+		}
+		else
+		{
+			$this->view->plugins_dir[] =  ROOT_PATH . '/instances/' . $this->instance . '/templates/' . '_smarty/plugins';
+		}
+
+		// Last path is the default smarty plugins directory.
+		$this->view->plugins_dir[] =  ROOT_PATH . '/libs/'. Config::getInstance()->getLibrary( 'smarty' ).'/plugins';
 	}
 
 }

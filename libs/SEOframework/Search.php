@@ -1,15 +1,15 @@
 <?php
 /**
  * LICENSE
- * 
+ *
  * Copyright 2010 Albert Garcia
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,10 +20,42 @@
 
 class Search
 {
-	static private $instance;
+	static protected $instance;
+
 	static public $search_engine;
 
-	private function __construct() {}
+	protected $sphinx;
+
+	protected function __construct()
+	{
+		$sphinx_active 	= Config::getInstance()->getConfig( 'sphinx', 'active' );
+
+		// Check if Sphinx is enabled by configuration:
+		if ( true === $sphinx_active )
+		{
+			include ROOT_PATH . '/libs/'.Config::getInstance()->getLibrary( 'sphinx' ) . '/sphinxapi.php';
+
+			$sphinx_config = Config::getInstance()->getConfig( 'sphinx' );
+
+			self::$search_engine 	= 'Sphinx';
+			$this->sphinx 			= new SphinxClient();
+			$this->sphinx->SetServer( $sphinx_config['server'], $sphinx_config['port'] );
+
+			// If it's defined a time out connection in config file:
+			if( isset( $sphinx_config['time_out'] ) )
+			{
+				$this->sphinx->SetConnectTimeout( $sphinx_config['time_out'] );
+			}
+
+			// Check that Sphinx is listening:
+			if ( true ==! $this->sphinx->Open() )
+			{
+				trigger_error( 'Sphinx ('.$sphinx_config['server'].':'.$sphinx_config['port'].') is down!' );
+				$this->sphinx = false;
+			}
+		}
+		return $sphinx_config;
+	}
 
 	/**
 	 * Singleton of config class.
@@ -35,48 +67,18 @@ class Search
 	{
 		if ( !isset ( self::$instance ) )
 		{
-			$sphinx_active = Config::getInstance()->getConfig( 'sphinx', 'active' );
-			
-			// Check if Sphinx is enabled by configuration:
-			if ( true === $sphinx_active )
+			if ( Domains::getInstance()->getDevMode() !== true )
 			{
-				include ROOT_PATH . '/libs/'.Config::getInstance()->getLibrary( 'sphinx' ) . '/sphinxapi.php';
-				
-				$sphinx_server 	= Config::getInstance()->getConfig( 'sphinx', 'server' );
-				$sphinx_port 	= Config::getInstance()->getConfig( 'sphinx', 'port' );
-								
-				self::$search_engine 	= 'Sphinx';			
-				self::$instance 		= new SphinxClient();
-				self::$instance->SetServer( $sphinx_server, $sphinx_port );
-				
-				// Check that Sphinx is listening:
-				if ( true ==! self::$instance->Open() )
-				{
-					trigger_error( 'Sphinx ('.$sphinx_server.':'.$sphinx_port.') is down!' );
-					self::$instance = false;
-				}
+				self::$instance = new Search;
+			}
+			else
+			{
+				Bootstrap::getClass( 'SearchDebug', false );
+				self::$instance = new SearchDebug;
 			}
 		}
 
 		return self::$instance;
-	}
-
-	/**
-	 * Override parent RunQueries to put results into debug array and benchmark times.
-	 *
-	 * @return array
-	 */
-	function RunQueries()
-	{
-		Benchmark::getInstance()->timingStart( 'search' );
-
-		$answer = self::$instance->RunQueries();
-
-		$query_time = Benchmark::getInstance()->timingCurrentToRegistry( 'search' );
-
-		Registry::push( 'searches', $answer );
-
-		return $answer;
 	}
 
 	/**
@@ -86,8 +88,8 @@ class Search
 	 * @param mixed $args
 	 * @return mixed
 	 */
-	function __call($method, $args)//call adodb methods
-	{	
-		return call_user_func_array(array(self::$instance, $method),$args);
+	function __call( $method, $args )
+	{
+		return call_user_func_array( array( $this->sphinx, $method ), $args );
 	}
 }
