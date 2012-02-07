@@ -58,7 +58,7 @@ class Config
 		$this->instance_name = $instance_name;
 		$this->config_path = ROOT_PATH . "/instances/" . $instance_name ."/config/";
 		// $this->paths_to_configs = $this->parseIni( $this->configuration_files );
-		include_once( $this->config_path . $this->configuration_files );
+		include( $this->config_path . $this->configuration_files );
 		$this->paths_to_configs = $config;
 	}
 
