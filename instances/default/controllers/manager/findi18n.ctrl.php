@@ -47,7 +47,7 @@ class ManagerFindi18nController extends Controller
 			else
 			{
 				// {t}Search 'T' blocks{/t}
-				preg_match_all( "/\{t([^\{\}]*)\}([^\{\}]+)\{\/t\}/", $tpl_text, $matches );
+				preg_match_all( "/\{t([^\{\}]*)\}([^\{\}]+)\{\/t[^\}]*\}/", $tpl_text, $matches );
 				$file_literals = array_unique( $matches[2] );
 			}
 
@@ -92,7 +92,7 @@ class ManagerFindi18nController extends Controller
 		$literals_groups['smarty'] = $this->extractStringsForTranslation( $libs_path, 'libs', false );
 
 		$final_literals = array();
-		
+
 		foreach ( $literals_groups as $group )
 		{
 			foreach ( $group as $literal=>$relative_path )
@@ -107,7 +107,7 @@ class ManagerFindi18nController extends Controller
 				}
 			}
 		}
-				
+
 		return $final_literals;
 	}
 
@@ -129,14 +129,14 @@ class ManagerFindi18nController extends Controller
 
 		$charset = $post->getString( 'charset' );
 		$this->assign( 'charset', ( $charset ? $charset : 'utf-8' ) );
-		
+
 		$this->assign( 'instance', 'default' );
 
 		if ( $post->isSent( 'instance' ) )
 		{
 			$instance = $post->getString( 'instance' );
 			$locale = $post->getString( 'locale' );
-			
+
 			$temp_lang = explode ( '_', $locale );
 			$this->assign( 'language', $temp_lang[1] );
 
