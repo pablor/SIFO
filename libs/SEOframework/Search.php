@@ -47,11 +47,10 @@ class Search
 				$this->sphinx->SetConnectTimeout( $sphinx_config['time_out'] );
 			}
 
-			// Check that Sphinx is listening:
+			// Check if Sphinx is listening:
 			if ( true ==! $this->sphinx->Open() )
 			{
-				trigger_error( 'Sphinx ('.$sphinx_config['server'].':'.$sphinx_config['port'].') is down!' );
-				$this->sphinx = false;
+				throw new Exception_500( 'Sphinx ('.$sphinx_config['server'].':'.$sphinx_config['port'].') is down!' );
 			}
 		}
 		return $sphinx_config;
