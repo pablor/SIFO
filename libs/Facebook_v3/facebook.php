@@ -33,21 +33,18 @@ class Facebook extends BaseFacebook
    * @see BaseFacebook::__construct in facebook.php
    */
   public function __construct($config) {
-    if (!session_id()) {
-      session_start();
-    }
     parent::__construct($config);
+    session_start();
   }
-
-  protected static $kSupportedKeys =
-    array('state', 'code', 'access_token', 'user_id');
 
   /**
    * Provides the implementations of the inherited abstract
    * methods.  The implementation uses PHP sessions to maintain
-   * a store for authorization codes, user ids, CSRF states, and
-   * access tokens.
+   * a store for user ids and access tokens.
    */
+  protected static $kSupportedKeys =
+    array('code', 'access_token', 'user_id');
+
   protected function setPersistentData($key, $value) {
     if (!in_array($key, self::$kSupportedKeys)) {
       self::errorLog('Unsupported key passed to setPersistentData.');
@@ -69,19 +66,10 @@ class Facebook extends BaseFacebook
       $_SESSION[$session_var_name] : $default;
   }
 
-  protected function clearPersistentData($key) {
-    if (!in_array($key, self::$kSupportedKeys)) {
-      self::errorLog('Unsupported key passed to clearPersistentData.');
-      return;
-    }
-
-    $session_var_name = $this->constructSessionVariableName($key);
-    unset($_SESSION[$session_var_name]);
-  }
-
   protected function clearAllPersistentData() {
     foreach (self::$kSupportedKeys as $key) {
-      $this->clearPersistentData($key);
+      $session_var_name = $this->constructSessionVariableName($key);
+      unset($_SESSION[$session_var_name]);
     }
   }
 
