@@ -32,6 +32,7 @@ class DebugIndexController extends Controller
 		$debug['queries']			= Registry::getInstance()->get( 'queries' );
 		$debug['queries_errors']	= Registry::getInstance()->get( 'queries_errors' );
 		$debug['searches']			= Registry::getInstance()->get( 'searches' );
+		$debug['debug_messages']	= Registry::getInstance()->get( 'debug_messages' );
 		$debug['session']			= $this->getSessionData();
 		$debug['cookies']			= FilterCookieDebug::getCookiesArray();
 
